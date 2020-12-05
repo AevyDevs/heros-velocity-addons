@@ -1,0 +1,15 @@
+{
+  "redis": {
+    "ip": "localhost",
+    "port": "6379",
+    "password": "password"
+  },
+  "mysql": {
+    "ip": "localhost",
+    "port": "6379",
+    "database": "database",
+    "table": "table",
+    "user": "user",
+    "password": "password"
+  }
+}
