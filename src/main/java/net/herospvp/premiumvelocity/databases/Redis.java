@@ -1,10 +1,8 @@
 package net.herospvp.premiumvelocity.databases;
 
 import lombok.Getter;
-import lombok.Setter;
 import redis.clients.jedis.JedisPool;
 
-import javax.security.auth.login.Configuration;
 import java.util.TreeSet;
 
 public class Redis {

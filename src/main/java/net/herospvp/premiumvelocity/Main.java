@@ -16,7 +16,6 @@ import net.herospvp.premiumvelocity.databases.Hikari;
 import net.herospvp.premiumvelocity.databases.Redis;
 import net.herospvp.premiumvelocity.databases.Storage;
 import net.herospvp.premiumvelocity.monitor.Events;
-import net.herospvp.premiumvelocity.threadbakery.ConnectionCheckerThread;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -28,7 +27,7 @@ public class Main {
     @Getter
     private static ProxyServer server;
     @Getter
-    private final Logger logger;
+    private static Logger logger;
     private final Path dataDirectory;
     @Getter @Setter
     private static Redis redis;
@@ -38,7 +37,7 @@ public class Main {
     @Inject
     public Main(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
         Main.server = server;
-        this.logger = logger;
+        Main.logger = logger;
         this.dataDirectory = dataDirectory;
 
         CommandManager commandManager = server.getCommandManager();
@@ -53,28 +52,20 @@ public class Main {
             Storage.loadData();
         } catch (Exception e) {
             e.printStackTrace();
-            this.logger.error("Could not parse JSON at ./plugins/HerosPremium/config.json");
-            this.logger.error("OR");
-            this.logger.error("An error occurred when initializing the database");
-            this.logger.error("Shutting down...");
+            logger.error("Could not parse JSON at ./plugins/HerosPremium/config.json");
+            logger.error("OR");
+            logger.error("An error occurred when initializing the database");
+            logger.error("Shutting down...");
             server.shutdown();
         }
 
         server.getEventManager().register(this, new Events());
-        new ConnectionCheckerThread();
     }
 
     @Subscribe
     public void on(ProxyShutdownEvent event) {
         if (redis != null)
             redis.getPool().close();
-
-        if (hikari != null)
-            try {
-                hikari.getDataSource().getConnection().close();
-            } catch (Exception e) {
-                this.logger.error("Could not close the data-source.");
-            }
     }
 
 }

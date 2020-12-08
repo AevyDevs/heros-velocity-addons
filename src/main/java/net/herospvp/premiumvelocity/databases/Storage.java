@@ -2,9 +2,9 @@ package net.herospvp.premiumvelocity.databases;
 
 import com.github.cliftonlabs.json_simple.JsonObject;
 import com.github.cliftonlabs.json_simple.Jsoner;
+import lombok.Getter;
 import net.herospvp.premiumvelocity.Main;
-import net.herospvp.premiumvelocity.databases.Hikari;
-import net.herospvp.premiumvelocity.databases.Redis;
+import net.herospvp.premiumvelocity.threadbakery.Oven;
 import redis.clients.jedis.JedisPool;
 
 import java.io.BufferedWriter;
@@ -12,8 +12,14 @@ import java.io.File;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Storage {
+
+    @Getter
+    public static Map<String, Boolean> databaseData = new HashMap<>();
 
     public static void loadData() throws Exception {
 
@@ -26,7 +32,6 @@ public class Storage {
             JsonObject redis = new JsonObject(), mysql = new JsonObject();
 
             redis.put("ip", "localhost");
-            redis.put("port", "6379");
             redis.put("password", "password");
 
             mysql.put("ip", "localhost");
@@ -49,22 +54,20 @@ public class Storage {
 
         // redis
         JsonObject redisPath = (JsonObject) parser.get("redis");
-        String ip = (String) redisPath.get("ip"), port = (String) redisPath.get("port"),
-                password = (String) redisPath.get("password");
-
-        Redis redis = new Redis(password, new JedisPool(ip + ":" + port));
-        Main.setRedis(redis);
+        String redisIP = (String) redisPath.get("ip"),
+                redisPassword = (String) redisPath.get("password");
 
         // mysql
         JsonObject mysqlPath = (JsonObject) parser.get("mysql");
-        ip = (String) mysqlPath.get("ip");
-        port = (String) mysqlPath.get("port");
-        password = (String) mysqlPath.get("password");
-        String user = (String) mysqlPath.get("user"), database = (String) mysqlPath.get("database"),
-                table = (String) mysqlPath.get("table");
+        String mysqlIP = (String) mysqlPath.get("ip"),
+                mysqlPassword = (String) mysqlPath.get("password"),
+                user = (String) mysqlPath.get("user"),
+                database = (String) mysqlPath.get("database"),
+                table = (String) mysqlPath.get("table"),
+                port = (String) mysqlPath.get("port");
 
-        Hikari hikari = new Hikari(ip, port, database, table, user, password);
-        Main.setHikari(hikari);
+        Main.setRedis(new Redis(redisPassword, new JedisPool(redisIP)));
+        Main.setHikari(new Hikari(mysqlIP, port, database, table, user, mysqlPassword));
 
         reader.close();
     }

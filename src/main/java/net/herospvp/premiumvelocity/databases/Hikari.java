@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Hikari {
 
@@ -15,8 +16,8 @@ public class Hikari {
     private final DataSource dataSource;
     private final String table;
 
-    public Hikari(String ip, String port, String database,
-                  String table, String user, String password) throws Exception {
+    public Hikari(String ip, String port, String database, String table, String user, String password) throws SQLException {
+
         HikariConfig config = new HikariConfig();
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
         config.setJdbcUrl("jdbc:mysql://" + ip + ":" + port + "/" + database + "?useSSL=false&characterEncoding=utf8");
@@ -39,13 +40,20 @@ public class Hikari {
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             connection = dataSource.getConnection();
             preparedStatement = connection.prepareStatement
                     ("CREATE TABLE IF NOT EXISTS " + table + " (name varchar(16), premium boolean)");
             preparedStatement.executeUpdate();
+
+            preparedStatement = connection.prepareStatement("SELECT * FROM " + table);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Storage.getDatabaseData().put(resultSet.getString(1), resultSet.getBoolean(2));
+            }
         } finally {
-            close(connection, preparedStatement, null);
+            close(connection, preparedStatement, resultSet);
         }
 
         this.table = table;
@@ -64,7 +72,7 @@ public class Hikari {
         boolean itIs = false;
         try {
             connection = dataSource.getConnection();
-            preparedStatement = connection.prepareStatement("SELECT PREMIUM FROM " + table + " WHERE NAME = ?;");
+            preparedStatement = connection.prepareStatement("SELECT premium FROM " + table + " WHERE NAME = ?;");
             preparedStatement.setString(1, playerName);
 
             resultSet = preparedStatement.executeQuery();
@@ -88,6 +96,7 @@ public class Hikari {
             preparedStatement = connection.prepareStatement("INSERT INTO " + table +
                     " (name, premium) VALUES (\"" + playerName + "\", \"" + (maybeSetPremium ? 1 : 0) + "\");");
             preparedStatement.execute();
+            Storage.getDatabaseData().replace(playerName, maybeSetPremium);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

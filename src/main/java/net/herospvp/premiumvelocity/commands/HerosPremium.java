@@ -2,14 +2,11 @@ package net.herospvp.premiumvelocity.commands;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
-import com.velocitypowered.api.proxy.Player;
-import net.herospvp.morevelocity.Tasks;
 import net.herospvp.premiumvelocity.Main;
-import net.herospvp.premiumvelocity.databases.Hikari;
+import net.herospvp.premiumvelocity.databases.Storage;
+import net.herospvp.premiumvelocity.threadbakery.Oven;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-
-import javax.print.DocFlavor;
 
 public class HerosPremium implements SimpleCommand {
 
@@ -21,6 +18,11 @@ public class HerosPremium implements SimpleCommand {
         // Get the arguments after the command alias
         String[] args = invocation.arguments();
 
+        if (!source.hasPermission("heros.premium")) {
+            source.sendMessage(Component.text("Non puoi! (heros.premium)").color(NamedTextColor.RED));
+            return;
+        }
+
         if (args.length <= 1) {
             helpMessage();
             return;
@@ -30,11 +32,9 @@ public class HerosPremium implements SimpleCommand {
             case "info": {
                 if (args.length == 2) {
                     String name = args[1];
-                    new Tasks().runAsyncSingleThreaded(() -> {
-                        source.sendMessage(Component.text(name + " nel database risulta essere: "
-                                + (Main.getHikari().isPremium(name) ? "premium" : "cracked"))
-                                .color(NamedTextColor.RED));
-                    });
+                    source.sendMessage(Component.text(name + " nel database risulta essere: "
+                            + (Storage.getDatabaseData().get(name) ? "premium" : "cracked"))
+                            .color(NamedTextColor.GOLD));
                 } else {
                     helpMessage();
                 }
@@ -44,7 +44,7 @@ public class HerosPremium implements SimpleCommand {
                 if (args.length == 3) {
                     String status = args[1].toLowerCase(), name = args[2];
 
-                    new Tasks().runAsyncSingleThreaded(() -> {
+                    Oven.runSingleThreaded(() -> {
                         boolean isPremium = Main.getHikari().isPremium(name);
 
                         if (!status.equals("premium") && !status.equals("cracked")) {
