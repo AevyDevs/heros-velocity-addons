@@ -19,7 +19,7 @@ import java.util.Map;
 public class Storage {
 
     @Getter
-    public static Map<String, Boolean> databaseData = new HashMap<>();
+    private static Map<String, Boolean> databaseData = new HashMap<>();
 
     public static void loadData() throws Exception {
 

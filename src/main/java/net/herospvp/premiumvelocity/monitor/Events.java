@@ -13,6 +13,7 @@ import net.herospvp.premiumvelocity.Main;
 import net.herospvp.premiumvelocity.databases.Storage;
 import net.herospvp.premiumvelocity.threadbakery.Oven;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import redis.clients.jedis.Jedis;
 
 import java.util.UUID;
@@ -36,11 +37,11 @@ public class Events {
 
             if (!domain && isPremium) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
-                        Component.text("Mi spiace, puoi entrare solo da: mc.herospvp.net")));
+                        Component.text("Mi spiace, puoi entrare solo da: premium.herospvp.net").color(NamedTextColor.RED)));
                 return;
             } else if (domain && !isPremium) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
-                        Component.text("Mi spiace, puoi entrare solo da: premium.herospvp.net")));
+                        Component.text("Mi spiace, puoi entrare solo da: mc.herospvp.net").color(NamedTextColor.RED)));
                 return;
             } else if (domain) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
@@ -75,8 +76,8 @@ public class Events {
         if (!Storage.getDatabaseData().containsKey(playerName)) {
             Component component = Component.text("Hey! Ho notato che il tuo account non e' al sicuro! Se desideri " +
                     "proteggere il tuo account dai furti, perpiacere digita uno dei due seguenti comandi:\n" +
-                    "Se il tuo account e' premium, digita: /premium\nSe il tuo account e' cracked (o SP), digita /cracked");
-            player.sendMessage(component);
+                    "Se il tuo account e' premium: /premium\nSe il tuo account e' cracked (o SP): /cracked");
+            player.sendMessage(component.color(NamedTextColor.RED));
         }
 
     }

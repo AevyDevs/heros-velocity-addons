@@ -11,16 +11,22 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
 import lombok.Setter;
+import net.herospvp.premiumvelocity.commands.Cracked;
 import net.herospvp.premiumvelocity.commands.HerosPremium;
+import net.herospvp.premiumvelocity.commands.Premium;
 import net.herospvp.premiumvelocity.databases.Hikari;
 import net.herospvp.premiumvelocity.databases.Redis;
 import net.herospvp.premiumvelocity.databases.Storage;
 import net.herospvp.premiumvelocity.monitor.Events;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
-@Plugin(id = "herospremium", name = "HerosPremium", version = "0.1.0-SNAPSHOT",
+@Plugin(id = "herospremium", name = "HerosPremium", version = "0.1.1-SNAPSHOT",
         url = "", description = "", authors = {"Sorridi"})
 public class Main {
 
@@ -43,6 +49,12 @@ public class Main {
         CommandManager commandManager = server.getCommandManager();
         CommandMeta meta = commandManager.metaBuilder("herospremium").aliases("hp").build();
         commandManager.register(meta, new HerosPremium());
+
+        meta = commandManager.metaBuilder("premium").build();
+        commandManager.register(meta, new Premium());
+
+        meta = commandManager.metaBuilder("cracked").build();
+        commandManager.register(meta, new Cracked());
     }
 
     @Subscribe

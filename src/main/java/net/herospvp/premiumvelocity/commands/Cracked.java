@@ -1,0 +1,56 @@
+package net.herospvp.premiumvelocity.commands;
+
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
+import com.velocitypowered.api.proxy.Player;
+import net.herospvp.premiumvelocity.databases.Storage;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+
+public class Cracked implements SimpleCommand {
+
+    private CommandSource source;
+
+    @Override
+    public void execute(Invocation invocation) {
+        source = invocation.source();
+        // Get the arguments after the command alias
+        String[] args = invocation.arguments();
+
+        if (source instanceof ConsoleCommandSource) {
+            source.sendMessage(Component.text("Non puoi da qui!"));
+            return;
+        }
+
+        Player player = (Player) source;
+        String playerName = player.getUsername();
+
+        if (Storage.getDatabaseData().containsKey(playerName)) {
+            player.sendMessage(Component.text("Hai gia' impostato il tuo account su: "
+                    + Storage.getDatabaseData().get(playerName)));
+            return;
+        }
+
+        if (args.length == 0) {
+            helpMessage();
+            return;
+        }
+
+        if (args.length == 1) {
+            if (args[0].equalsIgnoreCase("confirm")) {
+                Storage.getDatabaseData().put(playerName, false);
+                player.sendMessage(Component.text("Ottimo, hai impostato il tuo account su cracked!")
+                        .color(NamedTextColor.GREEN));
+            } else {
+                helpMessage();
+            }
+        }
+    }
+
+    private void helpMessage() {
+        source.sendMessage(Component.text("Sei sicuro della tua scelta? Questa azione e' irreversibile!" +
+                "Se il tuo account e' CRACKED digita: /cracked confirm").color(NamedTextColor.RED));
+    }
+
+}
