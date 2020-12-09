@@ -4,7 +4,9 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
+import net.herospvp.premiumvelocity.Main;
 import net.herospvp.premiumvelocity.databases.Storage;
+import net.herospvp.premiumvelocity.threadbakery.Oven;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -39,7 +41,9 @@ public class Cracked implements SimpleCommand {
 
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("confirm")) {
-                Storage.getDatabaseData().put(playerName, false);
+                Oven.runSingleThreaded(() -> {
+                    Main.getHikari().setConnection(playerName, false);
+                });
                 player.sendMessage(Component.text("Ottimo, hai impostato il tuo account su cracked!")
                         .color(NamedTextColor.GREEN));
             } else {
@@ -50,7 +54,7 @@ public class Cracked implements SimpleCommand {
 
     private void helpMessage() {
         source.sendMessage(Component.text("Sei sicuro della tua scelta? Questa azione e' irreversibile!" +
-                "Se il tuo account e' CRACKED digita: /cracked confirm").color(NamedTextColor.RED));
+                " Se il tuo account e' CRACKED digita: /cracked confirm").color(NamedTextColor.RED));
     }
 
 }
