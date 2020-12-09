@@ -2,6 +2,7 @@ package net.herospvp.premiumvelocity.databases;
 
 import com.github.cliftonlabs.json_simple.JsonObject;
 import com.github.cliftonlabs.json_simple.Jsoner;
+import com.velocitypowered.api.proxy.Player;
 import lombok.Getter;
 import net.herospvp.premiumvelocity.Main;
 import net.herospvp.premiumvelocity.threadbakery.Oven;
@@ -15,11 +16,26 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 public class Storage {
 
     @Getter
-    private static Map<String, Boolean> databaseData = new HashMap<>();
+    private static final Map<String, Boolean> databaseData = new HashMap<>();
+    @Getter
+    private static final TreeSet<String> authenticatedPlayers = new TreeSet<>();
+
+    public static void addAuthPlayer(Player player) {
+        authenticatedPlayers.add(player.getUsername());
+    }
+
+    public static void removeAuthPlayer(Player player) {
+        authenticatedPlayers.remove(player.getUsername());
+    }
+
+    public static boolean containsAuthPlayer(Player player) {
+        return authenticatedPlayers.contains(player.getUsername());
+    }
 
     public static void loadData() throws Exception {
 

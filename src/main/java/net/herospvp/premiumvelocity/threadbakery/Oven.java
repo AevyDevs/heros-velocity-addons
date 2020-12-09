@@ -48,4 +48,18 @@ public class Oven {
         thread.start();
     }
 
+    public static void runSingleRepeatingTask(Runnable runnable, long time) {
+        Thread thread = new Thread(() -> {
+            try {
+                while (true) {
+                    runnable.run();
+                    Thread.sleep(time);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();
+    }
+
 }

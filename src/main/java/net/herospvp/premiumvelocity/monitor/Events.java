@@ -37,11 +37,13 @@ public class Events {
 
             if (!domain && isPremium) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
-                        Component.text("Mi spiace, puoi entrare solo da: premium.herospvp.net").color(NamedTextColor.RED)));
+                        Component.text("Mi spiace, puoi entrare solo da: premium.herospvp.net")
+                                .color(NamedTextColor.RED)));
                 return;
             } else if (domain && !isPremium) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
-                        Component.text("Mi spiace, puoi entrare solo da: mc.herospvp.net").color(NamedTextColor.RED)));
+                        Component.text("Mi spiace, puoi entrare solo da: mc.herospvp.net")
+                                .color(NamedTextColor.RED)));
                 return;
             } else if (domain) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
@@ -50,9 +52,10 @@ public class Events {
 
         boolean finalIsPremium = isPremium;
         Oven.runSingleThreaded(() -> {
-            Jedis jedis = Main.getRedis().getPool().getResource();
-            jedis.auth(Main.getRedis().getPassword());
-            jedis.set(playerName, finalIsPremium ? "premium" : "cracked");
+            try (Jedis jedis = Main.getRedis().getPool().getResource()) {
+                jedis.auth(Main.getRedis().getPassword());
+                jedis.set(playerName, finalIsPremium ? "premium" : "cracked");
+            }
         });
 
     }
