@@ -3,9 +3,9 @@ package net.herospvp.premiumvelocity.databases;
 import com.github.cliftonlabs.json_simple.JsonObject;
 import com.github.cliftonlabs.json_simple.Jsoner;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import lombok.Getter;
 import net.herospvp.premiumvelocity.Main;
-import net.herospvp.premiumvelocity.threadbakery.Oven;
 import redis.clients.jedis.JedisPool;
 
 import java.io.BufferedWriter;
@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
@@ -23,7 +22,15 @@ public class Storage {
     @Getter
     private static final Map<String, Boolean> databaseData = new HashMap<>();
     @Getter
-    private static final TreeSet<String> authenticatedPlayers = new TreeSet<>();
+    private static final TreeSet<String> authenticatedPlayers = new TreeSet<>(), blacklistedPlayers = new TreeSet<>();
+    @Getter
+    private static final Map<Player, Player> playersAndStafferInSS = new HashMap<>();
+    @Getter
+    private static final Map<String, Integer> playersInHubs = new HashMap<>();
+    @Getter
+    private static final RegisteredServer hub1 = Main.getServer().getServer("hub-1").get(),
+                                    hub2 = Main.getServer().getServer("hub-2").get(),
+                                    controllo = Main.getServer().getServer("controllo").get();
 
     public static void addAuthPlayer(Player player) {
         authenticatedPlayers.add(player.getUsername());
@@ -79,11 +86,12 @@ public class Storage {
                 mysqlPassword = (String) mysqlPath.get("password"),
                 user = (String) mysqlPath.get("user"),
                 database = (String) mysqlPath.get("database"),
-                table = (String) mysqlPath.get("table"),
+                premiumLockTable = (String) mysqlPath.get("premiumLockTable"),
+                blacklistTable = (String) mysqlPath.get("blacklistTable"),
                 port = (String) mysqlPath.get("port");
 
         Main.setRedis(new Redis(redisPassword, new JedisPool(redisIP)));
-        Main.setHikari(new Hikari(mysqlIP, port, database, table, user, mysqlPassword));
+        Main.setHikari(new Hikari(mysqlIP, port, database, premiumLockTable, blacklistTable, user, mysqlPassword));
 
         reader.close();
     }

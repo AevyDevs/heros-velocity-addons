@@ -17,7 +17,6 @@ public class Cracked implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
         source = invocation.source();
-        // Get the arguments after the command alias
         String[] args = invocation.arguments();
 
         if (source instanceof ConsoleCommandSource) {

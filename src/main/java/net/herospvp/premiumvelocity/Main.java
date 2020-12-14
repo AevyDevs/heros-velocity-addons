@@ -5,34 +5,25 @@ import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
-import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
 import lombok.Setter;
-import net.herospvp.premiumvelocity.commands.Cracked;
-import net.herospvp.premiumvelocity.commands.HerosPremium;
-import net.herospvp.premiumvelocity.commands.Hub;
-import net.herospvp.premiumvelocity.commands.Premium;
+import net.herospvp.premiumvelocity.commands.*;
 import net.herospvp.premiumvelocity.databases.Hikari;
 import net.herospvp.premiumvelocity.databases.Redis;
 import net.herospvp.premiumvelocity.databases.Storage;
-import net.herospvp.premiumvelocity.monitor.AuthMeBridgeEvents;
-import net.herospvp.premiumvelocity.monitor.Events;
+import net.herospvp.premiumvelocity.monitor.*;
 import net.herospvp.premiumvelocity.threadbakery.Oven;
 import org.slf4j.Logger;
 import redis.clients.jedis.Jedis;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 
-@Plugin(id = "herospremium", name = "HerosPremium", version = "0.1.1-SNAPSHOT",
-        url = "", description = "MultiThreaded and Velocity based PremiumLock", authors = {"Sorridi"})
+@Plugin(id = "herospremium", name = "HerosPremium", version = "1.0.0-SNAPSHOT",
+        url = "", description = "Multi-Purpose and Velocity-Based proxy plugin.", authors = {"Sorridi"})
 public class Main {
 
     @Getter
@@ -63,6 +54,15 @@ public class Main {
 
         meta = commandManager.metaBuilder("hub").aliases("lobby").build();
         commandManager.register(meta, new Hub());
+
+        meta = commandManager.metaBuilder("where").build();
+        commandManager.register(meta, new Where());
+
+        meta = commandManager.metaBuilder("controllo").aliases("ss", "freeze").build();
+        commandManager.register(meta, new Controllo());
+
+        meta = commandManager.metaBuilder("blacklist").build();
+        commandManager.register(meta, new BlackList());
     }
 
     @Subscribe
@@ -79,8 +79,12 @@ public class Main {
             server.shutdown();
         }
 
-        server.getEventManager().register(this, new Events());
+        server.getEventManager().register(this, new SplitterEvents());
+        server.getEventManager().register(this, new PremiumLockEvents());
         server.getEventManager().register(this, new AuthMeBridgeEvents());
+        server.getEventManager().register(this, new IllegalNameEvent());
+        server.getEventManager().register(this, new ControlloEvents());
+        server.getEventManager().register(this, new BlackListEvents());
 
         Oven.runSingleRepeatingTask(() -> {
             for (Player player : getServer().getAllPlayers()) {

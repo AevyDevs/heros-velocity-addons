@@ -3,12 +3,8 @@ package net.herospvp.premiumvelocity.databases;
 import lombok.Getter;
 import redis.clients.jedis.JedisPool;
 
-import java.util.TreeSet;
-
 public class Redis {
 
-    @Getter
-    private final TreeSet<String> playerPremium = new TreeSet<>(), playerCracked = new TreeSet<>();
     @Getter
     private final String password;
     @Getter

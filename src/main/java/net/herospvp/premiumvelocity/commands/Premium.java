@@ -17,7 +17,6 @@ public class Premium implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
         source = invocation.source();
-        // Get the arguments after the command alias
         String[] args = invocation.arguments();
 
         if (source instanceof ConsoleCommandSource) {
@@ -34,21 +33,16 @@ public class Premium implements SimpleCommand {
             return;
         }
 
-        if (args.length == 0) {
-            helpMessage();
-            return;
-        }
-
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("confirm")) {
-                Oven.runSingleThreaded(() -> {
-                    Main.getHikari().setConnection(playerName, true);
-                });
+                Oven.runSingleThreaded(() -> Main.getHikari().setConnection(playerName, true));
                 player.sendMessage(Component.text("Ottimo, hai impostato il tuo account su premium!")
                         .color(NamedTextColor.GREEN));
             } else {
                 helpMessage();
             }
+        } else {
+            helpMessage();
         }
     }
 

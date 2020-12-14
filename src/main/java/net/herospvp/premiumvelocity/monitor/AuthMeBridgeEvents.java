@@ -12,13 +12,13 @@ import java.util.TreeSet;
 
 public class AuthMeBridgeEvents {
 
-    @Subscribe(order = PostOrder.LATE)
+    @Subscribe(order = PostOrder.LAST)
     public void on(DisconnectEvent event) {
         Player player = event.getPlayer();
         Storage.removeAuthPlayer(player);
     }
 
-    @Subscribe(order = PostOrder.LATE)
+    @Subscribe(order = PostOrder.FIRST)
     public void on(PlayerChatEvent event) {
         Player player = event.getPlayer();
         if (!event.getResult().isAllowed() || Storage.containsAuthPlayer(player)) {
@@ -36,7 +36,7 @@ public class AuthMeBridgeEvents {
         whitelistedCommands.add("reg");
     }
 
-    @Subscribe
+    @Subscribe(order = PostOrder.FIRST)
     public void on(CommandExecuteEvent event) {
         if (event.getCommandSource() instanceof Player) {
             Player player = (Player) event.getCommandSource();

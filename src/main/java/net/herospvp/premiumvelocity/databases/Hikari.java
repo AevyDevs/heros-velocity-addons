@@ -3,27 +3,20 @@ package net.herospvp.premiumvelocity.databases;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
-import net.herospvp.premiumvelocity.threadbakery.Oven;
 
 import javax.sql.DataSource;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
 
 public class Hikari {
 
     @Getter
     private final DataSource dataSource;
-    private final String table;
+    private final String table, blacklistedTable;
 
     public Hikari(String ip, String port, String database,
-                  String table, String user, String password) throws Exception {
+                  String table, String blacklistedTable, String user, String password) throws Exception {
 
         HikariConfig config = new HikariConfig();
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
@@ -45,14 +38,27 @@ public class Hikari {
         config.addDataSourceProperty("maintainTimeStats", "false");
         dataSource = new HikariDataSource(config);
         this.table = table;
+        this.blacklistedTable = blacklistedTable;
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             connection = dataSource.getConnection();
+
             preparedStatement = connection.prepareStatement
-                    ("CREATE TABLE IF NOT EXISTS " + table + " (name varchar(16), premium boolean)");
+                    ("CREATE TABLE IF NOT EXISTS " + blacklistedTable + " (name varchar(16));");
+            preparedStatement.executeUpdate();
+
+            preparedStatement = connection.prepareStatement("SELECT * FROM " + blacklistedTable);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Storage.getBlacklistedPlayers().add(resultSet.getString(1));
+                System.out.println(Storage.getBlacklistedPlayers());
+            }
+
+            preparedStatement = connection.prepareStatement
+                    ("CREATE TABLE IF NOT EXISTS " + table + " (name varchar(16), premium boolean);");
             preparedStatement.executeUpdate();
 
             preparedStatement = connection.prepareStatement("SELECT * FROM " + table);
@@ -60,6 +66,7 @@ public class Hikari {
             while (resultSet.next()) {
                 Storage.getDatabaseData().put(resultSet.getString(1), resultSet.getBoolean(2));
             }
+
         } finally {
             close(connection, preparedStatement, resultSet);
         }
@@ -99,8 +106,8 @@ public class Hikari {
         PreparedStatement preparedStatement = null;
         try {
             connection = dataSource.getConnection();
-
             String string;
+
             if (Storage.getDatabaseData().containsKey(playerName)) {
                 Storage.getDatabaseData().replace(playerName, maybeSetPremium);
                 string = "REPLACE INTO " + table +
@@ -109,6 +116,30 @@ public class Hikari {
                 Storage.getDatabaseData().put(playerName, maybeSetPremium);
                 string = "INSERT INTO " + table +
                         " (name, premium) VALUES (\"" + playerName + "\", \"" + (maybeSetPremium ? 1 : 0) + "\");";
+            }
+            preparedStatement = connection.prepareStatement(string);
+            preparedStatement.execute();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            close(connection, preparedStatement, null);
+        }
+    }
+
+    public void addOrRemoveBlacklistedPlayer(String playerName) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        try {
+            connection = dataSource.getConnection();
+            String string;
+
+            if (Storage.getBlacklistedPlayers().contains(playerName)) {
+                Storage.getBlacklistedPlayers().remove(playerName);
+                string = "DELETE FROM " + blacklistedTable + " WHERE name = \"" + playerName + "\";";
+            } else {
+                Storage.getBlacklistedPlayers().add(playerName);
+                string = "INSERT INTO " + blacklistedTable + " VALUES (\"" + playerName + "\");";
             }
             preparedStatement = connection.prepareStatement(string);
             preparedStatement.execute();

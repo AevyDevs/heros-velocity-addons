@@ -15,7 +15,6 @@ public class HerosPremium implements SimpleCommand {
     @Override
     public void execute(final Invocation invocation) {
         source = invocation.source();
-        // Get the arguments after the command alias
         String[] args = invocation.arguments();
 
         if (!source.hasPermission("heros.premium")) {
@@ -23,16 +22,17 @@ public class HerosPremium implements SimpleCommand {
             return;
         }
 
-        if (args.length < 1) {
+        if (args.length == 0) {
             helpMessage();
-            return;
-        } else if (args.length == 1) {
-            source.sendMessage(Component.text("Ci sono in totale: "
-                    + Storage.getDatabaseData().size() + " utenti protetti!").color(NamedTextColor.GREEN));
             return;
         }
 
         switch (args[0].toLowerCase()) {
+            case "stats": {
+                source.sendMessage(Component.text("Ci sono in totale: "
+                        + Storage.getDatabaseData().size() + " utenti protetti!").color(NamedTextColor.GREEN));
+                break;
+            }
             case "info": {
                 if (args.length == 2) {
                     String name = args[1];

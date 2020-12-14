@@ -7,7 +7,8 @@
     "ip": "localhost",
     "port": "6379",
     "database": "database",
-    "table": "table",
+    "premiumLockTable": "premiumLockTable",
+    "blacklistTable": "blacklistTable",
     "user": "user",
     "password": "password"
   }

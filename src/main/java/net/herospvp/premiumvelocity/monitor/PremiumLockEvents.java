@@ -1,0 +1,122 @@
+package net.herospvp.premiumvelocity.monitor;
+
+import com.velocitypowered.api.event.PostOrder;
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.connection.LoginEvent;
+import com.velocitypowered.api.event.connection.PreLoginEvent;
+import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.event.player.ServerPreConnectEvent;
+import com.velocitypowered.api.proxy.InboundConnection;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.util.GameProfile;
+import com.velocitypowered.api.util.UuidUtils;
+import net.herospvp.premiumvelocity.Main;
+import net.herospvp.premiumvelocity.databases.Storage;
+import net.herospvp.premiumvelocity.threadbakery.Oven;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import redis.clients.jedis.Jedis;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public class PremiumLockEvents {
+
+    @Subscribe(order = PostOrder.LAST)
+    public void on(PreLoginEvent event) {
+        InboundConnection inboundConnection = event.getConnection();
+        String playerName = event.getUsername();
+
+        // get domain
+        String from = inboundConnection.getVirtualHost().toString().toLowerCase();
+        // domain is premium? true otherwise false
+        boolean domain = from.contains("premium.herospvp.net");
+        // player is set as premium in the database? true otherwise false
+        boolean isPremium = false;
+
+        if (Storage.getDatabaseData().containsKey(playerName)) {
+            isPremium = Storage.getDatabaseData().get(playerName);
+
+            if (!domain && isPremium) {
+                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
+                        Component.text("Mi spiace, puoi entrare solo da: premium.herospvp.net")
+                                .color(NamedTextColor.RED)));
+                return;
+            } else if (domain && !isPremium) {
+                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
+                        Component.text("Mi spiace, puoi entrare solo da: mc.herospvp.net")
+                                .color(NamedTextColor.RED)));
+                return;
+            } else if (domain) {
+                event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
+            }
+        } else {
+            if (domain) {
+                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
+                        Component.text("Mi spiace, puoi entrare solo da: mc.herospvp.net")
+                                .color(NamedTextColor.RED)));
+            }
+            return;
+        }
+
+        boolean finalIsPremium = isPremium;
+        Oven.runSingleThreaded(() -> {
+            try (Jedis jedis = Main.getRedis().getPool().getResource()) {
+                jedis.auth(Main.getRedis().getPassword());
+                jedis.set(playerName, finalIsPremium ? "premium" : "cracked");
+            }
+        });
+
+    }
+
+    @Subscribe
+    public void on(GameProfileRequestEvent event) {
+        if (event.isOnlineMode()) {
+            String playerName = event.getUsername();
+            UUID uuid = UuidUtils.generateOfflinePlayerUuid(playerName);
+
+            GameProfile gameProfile = new GameProfile(uuid, playerName, event.getOriginalProfile().getProperties());
+            event.setGameProfile(gameProfile);
+        }
+    }
+
+    @Subscribe(order = PostOrder.LAST)
+    public void on(LoginEvent event) {
+        Player player = event.getPlayer();
+        String playerName = player.getUsername();
+
+        if (!Storage.getDatabaseData().containsKey(playerName)) {
+
+            Component component = Component.text("\n\n\n\nHey! Ho notato che il tuo account non e' al sicuro! Se desideri " +
+                    "proteggere il tuo account dai furti, perpiacere digita uno dei due seguenti comandi:\n" +
+                    "Se il tuo account e' premium: /premium\nSe il tuo account e' cracked (o SP): /cracked");
+            player.sendMessage(component.color(NamedTextColor.RED));
+        }
+
+    }
+
+    @Subscribe(order = PostOrder.LAST)
+    public void on(ServerPreConnectEvent event) {
+        Optional<RegisteredServer> optionalRegisteredServer = event.getResult().getServer();
+        String playerName = event.getPlayer().getUsername();
+
+        if (optionalRegisteredServer.isPresent()) {
+            RegisteredServer registeredServer = optionalRegisteredServer.get();
+
+            if (registeredServer.getServerInfo().getName().contains("hub")
+                    && Storage.containsAuthPlayer(event.getPlayer())) {
+
+                Oven.runSingleThreaded(() -> {
+                    try (Jedis jedis = Main.getRedis().getPool().getResource()) {
+                        jedis.auth(Main.getRedis().getPassword());
+                        jedis.set(playerName, "hub");
+                    }
+                });
+            }
+        }
+    }
+
+
+
+}
